@@ -417,6 +417,7 @@ cmd_build() {
     # By default, we'll build the debug binaries.
     profile="debug"
     libc="musl"
+    target_provided=false
 
     # Parse any command line args.
     while [ $# -gt 0 ]; do
@@ -424,6 +425,7 @@ cmd_build() {
             "-h"|"--help")  { cmd_help; exit 1;     } ;;
             "--debug")      { profile="debug";      } ;;
             "--release")    { profile="release";    } ;;
+            "--target")     { target_provided=true;    } ;;
             "-l"|"--libc")
                 shift
                 [[ "$1" =~ ^(musl|gnu)$ ]] || \
@@ -438,8 +440,13 @@ cmd_build() {
         shift
     done
 
-    target="$(uname -m)-unknown-linux-${libc}"
-
+    if [ ! $target_provided ] 
+    then 
+        target_val="--target=\"$(uname -m)-unknown-linux-${libc}\""
+    else
+        target_val=""
+    fi
+    
     # Check prerequisites
     ensure_devctr
     ensure_build_dir
@@ -465,7 +472,7 @@ cmd_build() {
         -- \
         cargo build \
             --target-dir "$CTR_CARGO_TARGET_DIR" \
-            --target "$target" \
+            $target_val \
             "${cargo_args[@]}"
     ret=$?
 
